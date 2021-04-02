@@ -29,11 +29,13 @@ const DIRECTIONS = {
 let FSM =  StateMachine.factory({
     init: ACTIONS.START,
     transitions: [
-      { name: 'toOriginate',   from: ACTIONS.START,     to: ACTIONS.ORIGINATE },
-      { name: 'toRing',        from: ACTIONS.ORIGINATE, to: ACTIONS.RING },
-      { name: 'toAnswer',      from: ACTIONS.RING,      to: ACTIONS.ANSWERED },
-      { name: 'toHangup',      from: ACTIONS.ANSWERED,  to: ACTIONS.HANGUP },
-      { name: 'toNotAnswered', from: ACTIONS.RING,      to: ACTIONS.HANGUP }
+      { name: 'toOriginate',           from: ACTIONS.START,     to: ACTIONS.ORIGINATE },
+      { name: 'toRing',                from: ACTIONS.ORIGINATE, to: ACTIONS.RING },
+      { name: 'toAnswer',              from: ACTIONS.RING,      to: ACTIONS.ANSWERED },
+      { name: 'toHangup',              from: ACTIONS.ANSWERED,  to: ACTIONS.HANGUP },
+      { name: 'toNotAnswered',         from: ACTIONS.RING,      to: ACTIONS.HANGUP },
+      { name: 'toDevNullFromRing',     from: ACTIONS.RING,      to: ACTIONS.DEVNULL },
+      { name: 'toDevNullFromAnswered', from: ACTIONS.ANSWERED,  to: ACTIONS.DEVNULL }
     ],
     data: function(caller, callee) {
         return {
@@ -57,11 +59,13 @@ let FSM =  StateMachine.factory({
         }
     },
     methods: {
-      onToOriginate:   function() { this.sendOriginate(); },
-      onToRing:        function() { this.sendRinging(); },
-      onToAnswer:      function() { this.sendAnswer(); },
-      onToHangup:      function() { this.sendHangup(); },
-      onToNotAnswered: function() { this.sendNotAnswered(); },
+      onToOriginate:           function() { this.sendOriginate(); },
+      onToRing:                function() { this.sendRinging(); },
+      onToAnswer:              function() { this.sendAnswer(); },
+      onToHangup:              function() { this.sendHangup(); },
+      onToNotAnswered:         function() { this.sendNotAnswered(); },
+      onToDevNullFromRing:     function() { this.sendDevNull('from ring'); },
+      onToDevNullFromAnswered: function() { this.sendDevNull('from answered'); },
 
       sendOriginate: async function() {     
           console.debug('in sendOriginate()');   
@@ -99,6 +103,15 @@ let FSM =  StateMachine.factory({
         this.cdr.action = ACTIONS.HANGUP;
         post(this.cdr);
         MockCDR.add_record(this.cdr);
+      },
+
+      sendDevNull: async function(from) {
+          console.debug('in a sendDevNull ' + from);
+          console.debug('Call will not be finished with correct event, but CDR will be created');
+          this.cdr.call_end = new Date();
+          this.cdr.duration = (this.cdr.call_end - this.cdr.call_start) / 1000;
+          this.cdr.action = ACTIONS.HANGUP;
+          MockCDR.add_record(this.cdr);
       }
     }
 });
@@ -111,10 +124,18 @@ const call = async (fsm) => {
             if (Helpers.mock_random(2) === 0) {
                 fsm.toAnswer();
                 setTimeout(function() {
-                    fsm.toHangup();
+                    if (Helpers.mock_random(100) < 96) {
+                        fsm.toHangup();
+                    } else {
+                        fsm.toDevNullFromAnswered()
+                    }
                 }, 1000 + Helpers.mock_random(20000));
             } else {
-                fsm.toNotAnswered();
+                if (Helpers.mock_random(100) < 96) {
+                    fsm.toNotAnswered();
+                } else {
+                    fsm.toDevNullFromRing()
+                }
             }      
         }, 1000 + Helpers.mock_random(10000));
       }, 300 + Helpers.mock_random(3000));        
