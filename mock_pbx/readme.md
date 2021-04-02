@@ -1,7 +1,7 @@
 ## PBX SERVER MOCK API
-This application mocks some APIs of a PBX server.
+This application mocks some APIs of a PBX server, and emulates webhook activities for a call behavior.
 The purpose of this application is to replicate all the required endpoints required to complete the assignment given to you.  
-For simplicity reasons, all the CDRs are outbound calls made by a specific calling number to random destinations (contacts).
+For simplicity reasons, all the CDRs are outbound calls made by a random calling number to random destinations (contacts).
 
 Prerequisites
 -
@@ -21,8 +21,8 @@ Notes:
 
 How to use
 -
-After running the service you can call `/get_cdr` endpoint to load some initial data (5 records) into your service. Any consecutive calls to this endpoint will generate more data.  
-Once the initial data is stored, you will need to call `/trigger_webhooks`. This endpoint will fire the webhooks randomly like they could be fired in a real server. Note that a phone call might not finish.
+After running the service you can call `/get_cdr` endpoint to load some initial data (5 records) into your service. Any consecutive calls to this endpoint will generate more off-line CDRs.  
+Once the initial data is stored, and your microservice ready to handle call events, you should manually call `/trigger_webhooks`. This endpoint will fire the webhooks randomly like they could be fired in a real server. Note that a phone call might not finish.
 Finally, after making several calls to `/trigger_webhooks` you can call `/get_cdr` endpoint to retrieve more data. This will help you simulate the sync functionality.
 
 Endpoints / Methods
