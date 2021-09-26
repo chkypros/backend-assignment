@@ -1,0 +1,15 @@
+version: '3'
+services:
+  mock_pbx:
+    build:
+      context: mock_pbx
+      dockerfile: Dockerfile
+    ports:
+      - "3030:3030"
+
+  crm:
+    build:
+      context: crm
+      dockerfile: Dockerfile
+    ports:
+      - "8080:8080"

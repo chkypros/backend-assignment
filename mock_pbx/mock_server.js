@@ -8,6 +8,7 @@ const Helper = require("./lib/helper")
 
 const init = async () => {
     Settings.tenant = Helper.uuidv4();
+    console.log(`Tenant UUID: ${Settings.tenant}`)
     await PhoneNumbers.load();
 
     const server = new Hapi.Server({port: Settings.port});
